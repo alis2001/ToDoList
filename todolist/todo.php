@@ -19,9 +19,7 @@
         .tasks li {
             margin-bottom: 10px;
         }
-        .completed {
-            text-decoration: line-through;
-        }
+
     </style>
 </head>
 <body>
