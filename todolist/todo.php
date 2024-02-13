@@ -77,10 +77,11 @@ $result = $todoList->getTasks();
             display: flex;
             align-items: center;
         }
-        .task-input {
+         .task-input {
             flex: 1;
             margin-right: 10px;
         }
+
     </style>
 </head>
 <body>
