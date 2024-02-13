@@ -1,0 +1,8 @@
+.task-input {
+    width: 70%;
+    margin-right: 10px;
+}
+.error {
+    color: red;
+    font-weight: bold;
+}
