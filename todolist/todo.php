@@ -1,8 +1,64 @@
+<?php
+class ToDoList {
+    private $conn;
+
+    function __construct($servername, $username, $password, $dbname) {
+        $this->conn = mysqli_connect($servername, $username, $password, $dbname);
+        if (!$this->conn) {
+            die("Connection failed: " . mysqli_connect_error());
+        }
+    }
+
+    function addTask($task) {
+        $sql = "INSERT INTO tasks (task) VALUES ('$task')";
+        mysqli_query($this->conn, $sql);
+    }
+
+    function editTask($taskId, $taskName) {
+        $sql = "UPDATE tasks SET task='$taskName' WHERE id='$taskId'";
+        mysqli_query($this->conn, $sql);
+    }
+
+    function deleteTask($taskId) {
+        $sql = "DELETE FROM tasks WHERE id='$taskId'";
+        mysqli_query($this->conn, $sql);
+    }
+
+    function getTasks() {
+        $sql = "SELECT * FROM tasks";
+        $result = mysqli_query($this->conn, $sql);
+        return $result;
+    }
+
+    function closeConnection() {
+        mysqli_close($this->conn);
+    }
+}
+
+$todoList = new ToDoList("localhost", "root", "", "todolist");
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['submit'])) {
+        $task = $_POST['task'];
+        $todoList->addTask($task);
+    } elseif (isset($_POST['edit'])) {
+        $taskId = $_POST['id'];
+        $taskName = $_POST['task_name'];
+        $todoList->editTask($taskId, $taskName);
+    } elseif (isset($_POST['delete'])) {
+        $taskId = $_POST['id'];
+        $todoList->deleteTask($taskId);
+    }
+}
+
+$result = $todoList->getTasks();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List with Database</title>
     <style>
         .container {
@@ -18,9 +74,12 @@
         }
         .tasks li {
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
         }
-        .completed {
-            text-decoration: line-through;
+        .task-input {
+            flex: 1;
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -28,64 +87,28 @@
     <div class="container">
         <h1>To-Do List</h1>
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
-            <input type="text" name="task" placeholder="Enter task...">
+            <input type="text" name="task" class="task-input" placeholder="Enter task...">
             <button type="submit" name="submit">Add Task</button>
         </form>
         <ul class="tasks">
-            <?php
-            $servername = "localhost";
-            $username = "root";
-            $password = "";
-            $dbname = "todolist";
-            
-            $conn = mysqli_connect($servername, $username, $password, $dbname);
-
-            if (!$conn) {
-                die("Connection failed: " . mysqli_connect_error());
-            }
-
-            if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                if (isset($_POST['submit'])) {
-                    $task = $_POST['task'];
-
-                    $sql = "INSERT INTO tasks (task) VALUES ('$task')";
-                    mysqli_query($conn, $sql);
-                } elseif (isset($_POST['edit'])) {
-                    $taskId = $_POST['id'];
-                    $taskName = $_POST['task_name'];
-
-                    $sql = "UPDATE tasks SET task='$taskName' WHERE id='$taskId'";
-                    mysqli_query($conn, $sql);
-                } elseif (isset($_POST['delete'])) {
-                    $taskId = $_POST['id'];
-
-                    $sql = "DELETE FROM tasks WHERE id='$taskId'";
-                    mysqli_query($conn, $sql);
-                }
-            }
-
-            $sql = "SELECT * FROM tasks";
-            $result = mysqli_query($conn, $sql);
-
-            while ($row = mysqli_fetch_assoc($result)) {
-                $taskId = $row['id'];
-                $taskName = $row['task'];
-                echo "<li>";
-                echo "<form action='" . htmlspecialchars($_SERVER["PHP_SELF"]) . "' method='POST' style='display: inline;'>";
-                echo "<input type='hidden' name='id' value='$taskId'>";
-                echo "<input type='text' name='task_name' value='$taskName'>";
-                echo "<button type='submit' name='edit'>Edit</button>";
-                echo "</form>";
-                echo "<form action='" . htmlspecialchars($_SERVER["PHP_SELF"]) . "' method='POST' style='display: inline; margin-left: 10px;'>";
-                echo "<input type='hidden' name='id' value='$taskId'>";
-                echo "<button type='submit' name='delete'>Delete</button>";
-                echo "</form>";
-                echo "</li>";
-            }
-
-            mysqli_close($conn);
-            ?>
+            <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                <li>
+                    <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
+                        <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                        <input type="text" name="task_name" class="task-input" value="<?php echo $row['task']; ?>">
+                        <button type="submit" name="edit">Edit</button>
+                    </form>
+                    <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
+                        <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                        <button type="submit" name="delete">Delete</button>
+                    </form>
+                </li>
+            <?php endwhile; ?>
         </ul>
     </div>
 </body>
 </html>
+
+<?php
+$todoList->closeConnection();
+?>
